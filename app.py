@@ -1,26 +1,51 @@
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
-import pytesseract
-from PIL import Image
-from pdf2image import convert_from_path
 import os
 from werkzeug.utils import secure_filename
-import io
 from datetime import datetime
-from docx import Document
-import pandas as pd
-import openpyxl
+
+# Only import modules that work on Vercel
+try:
+    from docx import Document
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+
+try:
+    import openpyxl
+    OPENPYXL_AVAILABLE = True
+except ImportError:
+    OPENPYXL_AVAILABLE = False
+
+# OCR modules (won't work on Vercel)
+try:
+    import pytesseract
+    from PIL import Image
+    from pdf2image import convert_from_path
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuration
-# For local development
-if os.path.exists(r'C:\Program Files\Tesseract-OCR\tesseract.exe'):
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-# For Linux/Vercel (if Tesseract is available)
-elif os.path.exists('/usr/bin/tesseract'):
-    pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+# Check if running on Vercel
+IS_VERCEL = os.environ.get('VERCEL') == '1'
+
+if OCR_AVAILABLE and not IS_VERCEL:
+    # For local development
+    if os.path.exists(r'C:\Program Files\Tesseract-OCR\tesseract.exe'):
+        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    # For Linux/other platforms
+    elif os.path.exists('/usr/bin/tesseract'):
+        pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
 UPLOAD_FOLDER = '/tmp/uploads' if os.path.exists('/tmp') else 'uploads'
 OUTPUT_FOLDER = '/tmp/output' if os.path.exists('/tmp') else 'output'
@@ -28,18 +53,22 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf', 'docx',
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 4.5 * 1024 * 1024  # 4.5MB for Vercel
 
-# Create necessary directories
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-os.makedirs('temp_images', exist_ok=True)
+# Create necessary directories (only if not on Vercel at build time)
+try:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+except:
+    pass
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def process_image(image_path, lang='eng+khm'):
     """Process a single image and extract text"""
+    if not OCR_AVAILABLE:
+        raise Exception("OCR is not available on this platform. Please use Railway.app, Render.com, or Heroku for full OCR support.")
     try:
         img = Image.open(image_path)
         text = pytesseract.image_to_string(img, lang=lang)
@@ -49,6 +78,8 @@ def process_image(image_path, lang='eng+khm'):
 
 def process_pdf(pdf_path, lang='eng+khm'):
     """Process PDF and extract text from all pages"""
+    if not OCR_AVAILABLE:
+        raise Exception("PDF OCR is not available on this platform. Please use Railway.app, Render.com, or Heroku for full OCR support.")
     try:
         pages = convert_from_path(pdf_path, dpi=300)
         all_text = ""
@@ -63,6 +94,8 @@ def process_pdf(pdf_path, lang='eng+khm'):
 
 def process_docx(docx_path):
     """Process DOCX file and extract text"""
+    if not DOCX_AVAILABLE:
+        raise Exception("DOCX processing is not available. Missing python-docx module.")
     try:
         doc = Document(docx_path)
         all_text = ""
@@ -84,6 +117,8 @@ def process_docx(docx_path):
 
 def process_csv(csv_path):
     """Process CSV file and extract text"""
+    if not PANDAS_AVAILABLE:
+        raise Exception("CSV processing is not available. Missing pandas module.")
     try:
         df = pd.read_csv(csv_path)
         
@@ -97,6 +132,8 @@ def process_csv(csv_path):
 
 def process_xlsx(xlsx_path):
     """Process XLSX file and extract text from all sheets"""
+    if not PANDAS_AVAILABLE or not OPENPYXL_AVAILABLE:
+        raise Exception("XLSX processing is not available. Missing pandas or openpyxl module.")
     try:
         all_text = ""
         
@@ -121,9 +158,36 @@ def index():
     """Serve the main UI"""
     return render_template('index.html')
 
+@app.route('/api/health', methods=['GET'])
+def health():
+    """Health check endpoint"""
+    features = {
+        'ocr': OCR_AVAILABLE,
+        'docx': DOCX_AVAILABLE,
+        'csv': PANDAS_AVAILABLE,
+        'xlsx': OPENPYXL_AVAILABLE,
+        'platform': 'vercel' if IS_VERCEL else 'other'
+    }
+    return jsonify({
+        'status': 'healthy', 
+        'message': 'Khmer OCR API is running',
+        'features': features
+    })
+
 @app.route('/api/ocr', methods=['POST'])
 def ocr():
     """Main OCR endpoint"""
+    # Show helpful error for Vercel users
+    if IS_VERCEL:
+        file_ext = request.files.get('file', type(''))
+        if hasattr(file_ext, 'filename') and file_ext.filename:
+            ext = file_ext.filename.rsplit('.', 1)[-1].lower()
+            if ext in ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf']:
+                return jsonify({
+                    'error': 'OCR is not supported on Vercel. For full OCR functionality, please deploy to Railway.app, Render.com, or Heroku. See RAILWAY_DEPLOY.md for instructions.',
+                    'docs_url': 'https://github.com/PhonSobon/khmerOCR_Tesseract/blob/main/RAILWAY_DEPLOY.md'
+                }), 501
+    
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
@@ -179,11 +243,11 @@ def ocr():
     
     finally:
         # Clean up uploaded file
-        if os.path.exists(filepath):
-            try:
+        try:
+            if 'filepath' in locals() and os.path.exists(filepath):
                 os.remove(filepath)
-            except:
-                pass
+        except:
+            pass
 
 @app.route('/api/download/<filename>', methods=['GET'])
 def download(filename):
@@ -196,11 +260,6 @@ def download(filename):
             return jsonify({'error': 'File not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-@app.route('/api/health', methods=['GET'])
-def health():
-    """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'message': 'Khmer OCR API is running'})
 
 if __name__ == '__main__':
     print("Starting Khmer OCR API Server...")
