@@ -2,7 +2,7 @@
 
 A web application with Flask API and modern UI for extracting text from images and PDFs using Tesseract OCR with Khmer language support.
 
-## 🌟 Features
+## Features
 
 - **Web Interface**: Beautiful, responsive UI for uploading and processing files
 - **REST API**: Flask-based API for OCR processing
@@ -12,7 +12,7 @@ A web application with Flask API and modern UI for extracting text from images a
 - **Download Results**: Download extracted text as a .txt file
 - **Copy to Clipboard**: Quick copy functionality for extracted text
 
-## 📁 Contents
+## Contents
 
 - `app.py` — Flask web application with REST API
 - `templates/index.html` — Modern, responsive web UI
@@ -23,7 +23,7 @@ A web application with Flask API and modern UI for extracting text from images a
 - `output/` — Output text files from processing
 - `uploads/` — Temporary storage for uploaded files (auto-cleaned)
 
-## 🚀 Prerequisites
+## Prerequisites
 
 1. **Python 3.8 or newer**
 
@@ -36,7 +36,7 @@ A web application with Flask API and modern UI for extracting text from images a
    - Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases/
    - Extract and add the `bin` folder to your system PATH
 
-## 📦 Installation
+## Installation
 
 1. Clone or download this repository
 
@@ -59,7 +59,7 @@ pip install Flask Flask-CORS pytesseract Pillow pdf2image Werkzeug
      pytesseract.pytesseract.tesseract_cmd = r'YOUR_PATH_HERE\tesseract.exe'
      ```
 
-## 🎯 Usage
+## Usage
 
 ### Web Application (Recommended)
 
@@ -129,7 +129,7 @@ python pdf2text.py
 # Output: intermediate images saved in `output_images/` and combined text in `output_text.txt`
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Tesseract Path
 
@@ -151,14 +151,14 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf'}
 ```
 
-## 💡 Tips & Notes
+## Tips & Notes
 
 - **Khmer OCR**: Ensure `khm.traineddata` is in Tesseract's `tessdata` folder
 - **Better Results**: Use high-quality scans (300 DPI or higher) for better accuracy
 - **Large PDFs**: Processing may take longer for multi-page PDFs
 - **File Size**: Maximum upload size is 16MB (configurable)
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 **"Tesseract not found" error:**
 - Verify Tesseract installation
@@ -182,7 +182,32 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf'}
 **"Port 5000 already in use":**
 - Change port in `app.py`: `app.run(port=5001)`
 
-## 📞 Contact
+## Deployment
+
+### Railway.app (Recommended - FREE!)
+
+**Easiest deployment with full OCR support:**
+
+1. Push your code to GitHub
+2. Go to https://railway.app
+3. Click "Deploy from GitHub repo"
+4. Select your repository
+5. Railway auto-detects Dockerfile and deploys!
+
+**[See detailed Railway deployment guide](RAILWAY_DEPLOY.md)**
+
+### Other Deployment Options
+
+- **Render.com** - Free tier, Docker support, easy setup
+- **Heroku** - Use with buildpacks (see `Procfile` and `Aptfile`)
+- **Docker** - Use included `Dockerfile` for any container platform
+- **VPS** - DigitalOcean, AWS EC2, Google Cloud, etc.
+
+**Note about Vercel**: Vercel doesn't support Tesseract OCR. Only document extraction (DOCX, CSV, XLSX) will work. For full OCR functionality, use Railway, Render, or Docker deployment.
+
+**[See complete deployment guide](DEPLOYMENT.md)**
+
+## Contact
 
 If you need help or want to connect:
 - Email: phon.sobon02@gmail.com

@@ -1,0 +1,16 @@
+.venv
+venv
+env
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+uploads
+output
+temp_images
+output_images
+images
+pdf
+.env
+*.txt
+!requirements.txt

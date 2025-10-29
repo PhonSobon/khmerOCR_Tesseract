@@ -1,3 +1,58 @@
-images/
-output/
-pdf/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# Uploads and temporary files
+uploads/*
+!uploads/.gitkeep
+temp_images/*
+!temp_images/.gitkeep
+output_images/
+output/*.txt
+!output/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Keep example files
+!images/.gitkeep
+!output/.gitkeep
+!pdf/.gitkeep

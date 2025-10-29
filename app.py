@@ -7,15 +7,24 @@ import os
 from werkzeug.utils import secure_filename
 import io
 from datetime import datetime
+from docx import Document
+import pandas as pd
+import openpyxl
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuration
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'output'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf'}
+# For local development
+if os.path.exists(r'C:\Program Files\Tesseract-OCR\tesseract.exe'):
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# For Linux/Vercel (if Tesseract is available)
+elif os.path.exists('/usr/bin/tesseract'):
+    pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+
+UPLOAD_FOLDER = '/tmp/uploads' if os.path.exists('/tmp') else 'uploads'
+OUTPUT_FOLDER = '/tmp/output' if os.path.exists('/tmp') else 'output'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf', 'docx', 'csv', 'xlsx', 'xls'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
@@ -52,6 +61,61 @@ def process_pdf(pdf_path, lang='eng+khm'):
     except Exception as e:
         raise Exception(f"Error processing PDF: {str(e)}")
 
+def process_docx(docx_path):
+    """Process DOCX file and extract text"""
+    try:
+        doc = Document(docx_path)
+        all_text = ""
+        
+        # Extract text from paragraphs
+        for para in doc.paragraphs:
+            all_text += para.text + "\n"
+        
+        # Extract text from tables
+        for table in doc.tables:
+            all_text += "\n--- Table ---\n"
+            for row in table.rows:
+                row_text = " | ".join([cell.text for cell in row.cells])
+                all_text += row_text + "\n"
+        
+        return all_text.strip()
+    except Exception as e:
+        raise Exception(f"Error processing DOCX: {str(e)}")
+
+def process_csv(csv_path):
+    """Process CSV file and extract text"""
+    try:
+        df = pd.read_csv(csv_path)
+        
+        # Convert dataframe to formatted text
+        all_text = "--- CSV Data ---\n\n"
+        all_text += df.to_string(index=False)
+        
+        return all_text
+    except Exception as e:
+        raise Exception(f"Error processing CSV: {str(e)}")
+
+def process_xlsx(xlsx_path):
+    """Process XLSX file and extract text from all sheets"""
+    try:
+        all_text = ""
+        
+        # Load the workbook
+        workbook = openpyxl.load_workbook(xlsx_path, data_only=True)
+        
+        # Process each sheet
+        for sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]
+            all_text += f"\n\n--- Sheet: {sheet_name} ---\n\n"
+            
+            # Read data using pandas for better formatting
+            df = pd.read_excel(xlsx_path, sheet_name=sheet_name)
+            all_text += df.to_string(index=False)
+        
+        return all_text.strip()
+    except Exception as e:
+        raise Exception(f"Error processing XLSX: {str(e)}")
+
 @app.route('/')
 def index():
     """Serve the main UI"""
@@ -69,7 +133,7 @@ def ocr():
         return jsonify({'error': 'No file selected'}), 400
     
     if not allowed_file(file.filename):
-        return jsonify({'error': 'Invalid file type. Allowed types: PNG, JPG, JPEG, GIF, BMP, TIFF, PDF'}), 400
+        return jsonify({'error': 'Invalid file type. Allowed types: PNG, JPG, JPEG, GIF, BMP, TIFF, PDF, DOCX, CSV, XLSX'}), 400
     
     try:
         # Get language preference
@@ -87,6 +151,12 @@ def ocr():
         
         if file_ext == 'pdf':
             extracted_text = process_pdf(filepath, lang)
+        elif file_ext == 'docx':
+            extracted_text = process_docx(filepath)
+        elif file_ext == 'csv':
+            extracted_text = process_csv(filepath)
+        elif file_ext in ['xlsx', 'xls']:
+            extracted_text = process_xlsx(filepath)
         else:
             extracted_text = process_image(filepath, lang)
         
@@ -136,3 +206,6 @@ if __name__ == '__main__':
     print("Starting Khmer OCR API Server...")
     print("Access the UI at: http://localhost:5000")
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+# For Vercel
+app = app

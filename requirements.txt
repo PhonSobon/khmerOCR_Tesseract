@@ -4,3 +4,8 @@ pdf2image
 Flask
 Flask-CORS
 Werkzeug
+python-docx
+pandas
+openpyxl
+xlrd
+gunicorn

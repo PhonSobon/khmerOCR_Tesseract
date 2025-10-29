@@ -323,10 +323,10 @@
                     <div class="drop-zone-icon">📁</div>
                     <div class="drop-zone-text">Drag & Drop your file here</div>
                     <div class="drop-zone-hint">or click to browse</div>
-                    <div class="drop-zone-hint" style="margin-top: 10px;">Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF, PDF</div>
+                    <div class="drop-zone-hint" style="margin-top: 10px;">Supported formats: PNG, JPG, JPEG, GIF, BMP, TIFF, PDF, DOCX, CSV, XLSX</div>
                 </div>
 
-                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.gif,.bmp,.tiff,.pdf">
+                <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.gif,.bmp,.tiff,.pdf,.docx,.csv,.xlsx,.xls">
 
                 <div class="file-info" id="fileInfo">
                     <div class="file-info-text" id="fileInfoText"></div>
@@ -401,10 +401,17 @@
         function handleFile(file) {
             if (!file) return;
 
-            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/tiff', 'application/pdf'];
+            const allowedTypes = [
+                'image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/tiff', 
+                'application/pdf',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+                'text/csv',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+                'application/vnd.ms-excel' // .xls
+            ];
             
             if (!allowedTypes.includes(file.type)) {
-                showError('Invalid file type. Please upload an image or PDF file.');
+                showError('Invalid file type. Please upload an image, PDF, DOCX, CSV, or XLSX file.');
                 return;
             }
 
