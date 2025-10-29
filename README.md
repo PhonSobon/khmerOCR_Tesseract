@@ -1,91 +1,192 @@
 # Khmer OCR (Tesseract) — khmerOCR_Tesseract
 
-Small collection of example scripts that demonstrate using Tesseract OCR from Python to extract text from images and PDFs. The scripts are simple examples and write output text files to the repository.
+A web application with Flask API and modern UI for extracting text from images and PDFs using Tesseract OCR with Khmer language support.
 
-## Contents
+## 🌟 Features
 
-- `image2text.py` — Example that opens an image (`images/test1.jpg`), runs Tesseract OCR (English + Khmer), and writes the result to `output2.txt`.
-- `pdf2text.py` — Converts `pdf/wadding.pdf` into images (`output_images/`), runs OCR on each page (English by default), and writes the combined text to `output_text.txt`.
-- `images/` — place image files here for `image2text.py`.
-- `pdf/` — place PDF files here for `pdf2text.py`.
-- `outputt/` and other `output_*.txt` files contain example outputs.
+- **Web Interface**: Beautiful, responsive UI for uploading and processing files
+- **REST API**: Flask-based API for OCR processing
+- **Multi-format Support**: Process images (PNG, JPG, JPEG, GIF, BMP, TIFF) and PDF files
+- **Language Selection**: Choose between English, Khmer, or both languages
+- **Drag & Drop**: Easy file upload with drag-and-drop support
+- **Download Results**: Download extracted text as a .txt file
+- **Copy to Clipboard**: Quick copy functionality for extracted text
 
-## Prerequisites
+## 📁 Contents
 
-- Python 3.8 or newer.
-- Tesseract OCR installed on your system.
-  - Windows default installer installs Tesseract to `C:\Program Files\Tesseract-OCR\tesseract.exe`.
-  - Make sure Khmer language data (`khm.traineddata`) is installed in Tesseract's `tessdata` folder if you need Khmer OCR.
-  - Tesseract download: https://github.com/tesseract-ocr/tesseract
-## Python packages
+- `app.py` — Flask web application with REST API
+- `templates/index.html` — Modern, responsive web UI
+- `image2text.py` — Standalone script for image OCR
+- `pdf2text.py` — Standalone script for PDF OCR
+- `images/` — Place image files here for standalone scripts
+- `pdf/` — Place PDF files here for standalone scripts
+- `output/` — Output text files from processing
+- `uploads/` — Temporary storage for uploaded files (auto-cleaned)
 
-Install the required Python libraries (PowerShell):
+## 🚀 Prerequisites
+
+1. **Python 3.8 or newer**
+
+2. **Tesseract OCR** installed on your system:
+   - Windows: Download from https://github.com/tesseract-ocr/tesseract
+   - Default installation path: `C:\Program Files\Tesseract-OCR\tesseract.exe`
+   - **Important**: Install Khmer language data (`khm.traineddata`) during installation or download it separately
+
+3. **Poppler** (for PDF processing):
+   - Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases/
+   - Extract and add the `bin` folder to your system PATH
+
+## 📦 Installation
+
+1. Clone or download this repository
+
+2. Install Python dependencies:
 
 ```powershell
-pip install pytesseract pillow pdf2image
+pip install -r requirements.txt
 ```
 
-If you prefer a `requirements.txt`, create one with:
+Or install individually:
 
-```
-pytesseract
-Pillow
-pdf2image
+```powershell
+pip install Flask Flask-CORS pytesseract Pillow pdf2image Werkzeug
 ```
 
-## Configure Tesseract path (Windows)
+3. Verify Tesseract installation:
+   - Make sure Tesseract is installed at `C:\Program Files\Tesseract-OCR\tesseract.exe`
+   - If installed elsewhere, update the path in `app.py`:
+     ```python
+     pytesseract.pytesseract.tesseract_cmd = r'YOUR_PATH_HERE\tesseract.exe'
+     ```
 
-Both example scripts set the Tesseract executable path inside the script. If your Tesseract is installed in a different location, update the path in the scripts:
+## 🎯 Usage
 
-- `image2text.py` sets
-  `pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'`
-- `pdf2text.py` sets
-  `pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"`
+### Web Application (Recommended)
 
-Or, remove those lines if `tesseract` is available on your system PATH.
+1. Start the Flask server:
 
-## Usage examples (PowerShell)
+```powershell
+python app.py
+```
 
-1) OCR a single image (uses `images/test1.jpg` by default in `image2text.py`):
+2. Open your browser and navigate to:
+   ```
+   http://localhost:5000
+   ```
+
+3. Use the web interface:
+   - Select your preferred OCR language (English, Khmer, or both)
+   - Drag and drop a file or click to browse
+   - Click "Extract Text" button
+   - View, copy, or download the extracted text
+
+### API Endpoints
+
+#### Health Check
+```
+GET /api/health
+```
+
+#### OCR Processing
+```
+POST /api/ocr
+Content-Type: multipart/form-data
+
+Parameters:
+- file: Image or PDF file
+- lang: Language code (optional, default: "eng+khm")
+  - "eng+khm" - English and Khmer
+  - "khm" - Khmer only
+  - "eng" - English only
+
+Response:
+{
+  "success": true,
+  "text": "Extracted text...",
+  "filename": "original_filename.jpg",
+  "output_file": "timestamp_output.txt"
+}
+```
+
+#### Download Text File
+```
+GET /api/download/<filename>
+```
+
+### Standalone Scripts
+
+1) OCR a single image:
 
 ```powershell
 python image2text.py
 # Output: text printed to console and saved to `output2.txt`
 ```
 
-2) OCR a PDF (uses `pdf/wadding.pdf` by default in `pdf2text.py`):
+2) OCR a PDF:
 
 ```powershell
 python pdf2text.py
 # Output: intermediate images saved in `output_images/` and combined text in `output_text.txt`
 ```
 
-Note: The scripts are simple examples — they do not accept command-line arguments. To OCR different files, edit the `PDF_PATH`, image path, or output filenames directly inside the scripts.
+## 🔧 Configuration
 
-## Tips & Notes
+### Tesseract Path
 
-- To enable Khmer OCR, ensure you have the `khm.traineddata` file in Tesseract's `tessdata` folder. You can then change the language parameter in the scripts:
-  - Example for images: `pytesseract.image_to_string(img, lang='eng+khm')`
-  - Example for PDF pages: `pytesseract.image_to_string(page, lang='khm')`
-- For better results, experiment with Tesseract configs such as `--oem` and `--psm` (see Tesseract docs).
-- If `pdf2image.convert_from_path` fails, verify Poppler is installed and its `bin` directory is on PATH. You can also pass `poppler_path` to `convert_from_path`.
+Update in `app.py` if needed:
+```python
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+```
 
-## Troubleshooting
+### Upload Settings
 
-- If you see an error locating `tesseract.exe`, update `pytesseract.pytesseract.tesseract_cmd` or add Tesseract to PATH.
-- If PDF conversion fails, ensure Poppler is installed and accessible.
-- If Khmer text is garbled, confirm `khm.traineddata` is installed and try increasing DPI when converting PDF pages (e.g., `dpi=300`).
+Modify in `app.py`:
+```python
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+```
 
-## Contact
+### Supported File Types
 
-If you need help or want to connect, email: phon.sobon02@gmail.com
+```python
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf'}
+```
 
----
+## 💡 Tips & Notes
 
-If you'd like, I can:
+- **Khmer OCR**: Ensure `khm.traineddata` is in Tesseract's `tessdata` folder
+- **Better Results**: Use high-quality scans (300 DPI or higher) for better accuracy
+- **Large PDFs**: Processing may take longer for multi-page PDFs
+- **File Size**: Maximum upload size is 16MB (configurable)
 
-- make the scripts accept command-line arguments for input and output files,
-- add a `requirements.txt`, or
-- add a small example image and a sample PDF to the repo.
+## 🐛 Troubleshooting
 
-Tell me which of those you'd like next.
+**"Tesseract not found" error:**
+- Verify Tesseract installation
+- Update `tesseract_cmd` path in `app.py`
+- Add Tesseract to system PATH
+
+**"PDF conversion failed":**
+- Install Poppler
+- Add Poppler's `bin` folder to system PATH
+- Restart terminal/IDE after PATH changes
+
+**"Khmer text is garbled":**
+- Confirm `khm.traineddata` is installed
+- Try increasing DPI (edit `dpi=300` in code)
+- Check if the image/PDF has clear, readable Khmer text
+
+**"Module not found" errors:**
+- Reinstall dependencies: `pip install -r requirements.txt`
+- Check if you're using the correct Python environment
+
+**"Port 5000 already in use":**
+- Change port in `app.py`: `app.run(port=5001)`
+
+## 📞 Contact
+
+If you need help or want to connect:
+- Email: phon.sobon02@gmail.com
+
+## 📄 License
+
+This project is open source and available for educational and commercial use.

@@ -25,7 +25,7 @@ for i, page in enumerate(pages):
     print(f"Processing page {i+1}...")
 
     # OCR each page image
-    text = pytesseract.image_to_string(page, lang="eng")  # or "khm" for Khmer if installed
+    text = pytesseract.image_to_string(page, lang="khm+eng") 
     all_text += f"\n\n--- Page {i+1} ---\n{text}"
 
 # --- Step 3: Save text to a file ---
