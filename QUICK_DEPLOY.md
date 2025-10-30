@@ -24,7 +24,7 @@ git push origin main
 
 ---
 
-## 🎨 Deploy to Render.com (Alternative)
+## Deploy to Render.com (Alternative)
 
 ### Quick Deploy
 ```bash

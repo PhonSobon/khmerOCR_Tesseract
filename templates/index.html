@@ -229,7 +229,7 @@
 
         .result-text {
             background: #f8f9fa;
-            border: 1px solid #e0e0e0;
+            border: 2px solid #e0e0e0;
             border-radius: 10px;
             padding: 20px;
             min-height: 300px;
@@ -240,6 +240,28 @@
             font-size: 14px;
             line-height: 1.6;
             color: #333;
+            width: 100%;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .result-text:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #ffffff;
+        }
+
+        .edit-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .edit-icon {
+            display: inline-block;
+            margin-left: 10px;
+            color: #667eea;
         }
 
         .error-message {
@@ -344,13 +366,17 @@
 
             <div class="result-section" id="resultSection">
                 <div class="result-header">
-                    <div class="result-title">Extracted Text:</div>
+                    <div class="result-title">
+                        Extracted Text 
+                        <span class="edit-icon" title="You can edit the text">✏️</span>
+                    </div>
                     <div class="action-buttons">
                         <button class="copy-btn" id="copyBtn">Copy Text</button>
                         <button class="download-btn" id="downloadBtn">Download</button>
                     </div>
                 </div>
-                <div class="result-text" id="resultText"></div>
+                <textarea class="result-text" id="resultText" placeholder="Extracted text will appear here. You can edit it manually if needed."></textarea>
+                <div class="edit-hint">Tip: You can click and edit the text above to correct any errors before downloading or copying.</div>
             </div>
         </div>
     </div>
@@ -462,9 +488,11 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    resultText.textContent = data.text;
+                    resultText.value = data.text;
                     outputFilename = data.output_file;
                     resultSection.classList.add('show');
+                    // Auto-focus the textarea so users know they can edit
+                    setTimeout(() => resultText.focus(), 100);
                 } else {
                     showError(data.error || 'An error occurred during processing.');
                 }
@@ -477,14 +505,23 @@
         });
 
         downloadBtn.addEventListener('click', () => {
-            if (outputFilename) {
-                window.location.href = `/api/download/${outputFilename}`;
-            }
+            // Download the edited text (current content in textarea)
+            const editedText = resultText.value;
+            const blob = new Blob([editedText], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = outputFilename || `extracted_text_${new Date().getTime()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
         });
 
         copyBtn.addEventListener('click', async () => {
             try {
-                await navigator.clipboard.writeText(resultText.textContent);
+                // Copy the edited text (current content in textarea)
+                await navigator.clipboard.writeText(resultText.value);
                 const originalText = copyBtn.textContent;
                 copyBtn.textContent = 'Copied!';
                 setTimeout(() => {
